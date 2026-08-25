@@ -101,11 +101,20 @@ export const createEventTool = tool(
       const response = await calendar.events.insert({
         calendarId: "primary",
         sendUpdates: "all",
+        conferenceDataVersion: 1,
         requestBody: {
           summary,
           start,
           end,
           attendees,
+          conferenceData: {
+            createRequest: {
+              requestId: crypto.randomUUID(),
+              conferenceSolutionKey: {
+                type: "hangoutsMeet",
+              },
+            },
+          },
         },
       });
 
@@ -118,7 +127,11 @@ export const createEventTool = tool(
         start: response.data.start,
         end: response.data.end,
         attendees: response.data.attendees,
-        meetingLink: response.data.hangoutLink,
+        meetingLink:
+          response.data.hangoutLink ??
+          response.data.conferenceData?.entryPoints?.find(
+            (entry) => entry.entryPointType === "video",
+          )?.uri,
       });
     } catch (error) {
       console.log("Error: ", error);
@@ -140,7 +153,7 @@ export const createEventTool = tool(
       start: z.object({
         dateTime: z
           .string()
-          .describe("The event start datetime in UTC format."),
+          .describe("The event start datetime in RFC3339 format."),
         timeZone: z
           .string()
           .optional()

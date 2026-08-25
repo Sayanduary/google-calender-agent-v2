@@ -63,7 +63,7 @@ async function main() {
       {
         role: "user",
         content:
-          "Can You a create a meeting with Dipanwita at 8 P.M ? about honeymoon Date:Aug 25 , Time Zone : India, dipanwitasamanta766@gmail.com",
+          "Can You a create a meeting with SayanEFY at 8 P.M ? about system design Date:Aug 25 , Time Zone : India, sayanefy2001@gmail.com",
       },
     ],
   });
