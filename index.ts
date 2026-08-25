@@ -62,8 +62,7 @@ async function main() {
     messages: [
       {
         role: "user",
-        content:
-          "Can You a create a meeting with SayanEFY at 8 P.M ? about system design Date:Aug 25 , Time Zone : India, sayanefy2001@gmail.com",
+        content: "Do I have any meeting today?",
       },
     ],
   });

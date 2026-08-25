@@ -8,11 +8,21 @@ const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
 oauth2Client.setCredentials(tokens);
 
-type Params = {
-  q: string;
-  timeMin: string;
-  timeMax: string;
-};
+const getEventSchema = z.object({
+  q: z
+    .string()
+    .describe(
+      "Free-text search query. Searches event summary, description, location, attendee names/emails, and organizer names/emails.",
+    ),
+  timeMin: z
+    .string()
+    .describe("The start datetime in RFC3339 format, preferably UTC."),
+  timeMax: z
+    .string()
+    .describe("The end datetime in RFC3339 format, preferably UTC."),
+});
+
+type Params = z.infer<typeof getEventSchema>;
 
 export const getEventsTool = tool(
   async (params) => {
@@ -21,7 +31,6 @@ export const getEventsTool = tool(
      * timeMax
      * q
      */
-    console.log("params: ", params);
 
     const { q, timeMin, timeMax } = params as Params;
 
@@ -59,19 +68,7 @@ export const getEventsTool = tool(
     name: "get-events",
     description:
       "Get calendar events within a specified time range. The query searches event summary, description, location, attendees, and organizer information.",
-    schema: z.object({
-      q: z
-        .string()
-        .describe(
-          "Free-text search query. Searches event summary, description, location, attendee names/emails, and organizer names/emails.",
-        ),
-      timeMin: z
-        .string()
-        .describe("The start datetime in RFC3339 format, preferably UTC."),
-      timeMax: z
-        .string()
-        .describe("The end datetime in RFC3339 format, preferably UTC."),
-    }),
+    schema: getEventSchema,
   },
 );
 
@@ -80,18 +77,49 @@ type Attendee = {
   displayName?: string;
 };
 
-type EventData = {
-  summary: string;
-  start: {
-    dateTime: string;
-    timeZone?: string;
-  };
-  end: {
-    dateTime: string;
-    timeZone?: string;
-  };
-  attendees?: Attendee[];
-};
+// type EventData = {
+//   summary: string;
+//   start: {
+//     dateTime: string;
+//     timeZone?: string;
+//   };
+//   end: {
+//     dateTime: string;
+//     timeZone?: string;
+//   };
+//   attendees?: Attendee[];
+// };
+
+const createEventSchema = z.object({
+  summary: z.string().describe("The title or summary of the calendar event."),
+  start: z.object({
+    dateTime: z
+      .string()
+      .describe("The event start datetime in RFC3339 format."),
+    timeZone: z
+      .string()
+      .optional()
+      .describe("The timezone of the event start in UTC format."),
+  }),
+  end: z.object({
+    dateTime: z.string().describe("The event end datetime in UTC format."),
+    timeZone: z
+      .string()
+      .optional()
+      .describe("The timezone of the event end in UTC format."),
+  }),
+  attendees: z
+    .array(
+      z.object({
+        email: z.string(),
+        displayName: z.string().optional(),
+      }),
+    )
+    .optional()
+    .describe("List of attendees to invite to the event."),
+});
+
+type EventData = z.infer<typeof createEventSchema>;
 
 export const createEventTool = tool(
   async (eventData) => {
@@ -146,35 +174,6 @@ export const createEventTool = tool(
     name: "create-event",
     description:
       "Create a Google Calendar event with a summary, start time, end time, and optional attendees.",
-    schema: z.object({
-      summary: z
-        .string()
-        .describe("The title or summary of the calendar event."),
-      start: z.object({
-        dateTime: z
-          .string()
-          .describe("The event start datetime in RFC3339 format."),
-        timeZone: z
-          .string()
-          .optional()
-          .describe("The timezone of the event start in UTC format."),
-      }),
-      end: z.object({
-        dateTime: z.string().describe("The event end datetime in UTC format."),
-        timeZone: z
-          .string()
-          .optional()
-          .describe("The timezone of the event end in UTC format."),
-      }),
-      attendees: z
-        .array(
-          z.object({
-            email: z.string(),
-            displayName: z.string().optional(),
-          }),
-        )
-        .optional()
-        .describe("List of attendees to invite to the event."),
-    }),
+    schema: createEventSchema,
   },
 );
