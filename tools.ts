@@ -1,6 +1,6 @@
 import { tool } from "@langchain/core/tools";
 import { google } from "googleapis";
-import z from "zod";
+import z, { success } from "zod";
 import { oauth2Client } from "./server";
 import tokens from "./tokens.json";
 
@@ -175,5 +175,42 @@ export const createEventTool = tool(
     description:
       "Create a Google Calendar event with a summary, start time, end time, and optional attendees.",
     schema: createEventSchema,
+  },
+);
+
+export const deleteEventTool = tool(
+  async ({ eventId }) => {
+    try {
+      await calendar.events.delete({
+        calendarId: "primary",
+        eventId,
+        sendUpdates: "all",
+      });
+
+      return JSON.stringify({
+        success: true,
+        eventId,
+        message: "Event deleted successfully.",
+      });
+    } catch (error) {
+      console.error("Delete event error:", error);
+
+      return JSON.stringify({
+        success: false,
+        eventId,
+        message: "Failed to delete event.",
+      });
+    }
+  },
+  {
+    name: "delete-event",
+    description:
+      "Delete a Google Calendar event using its exact event ID. Only use this tool after the user has explicitly provided or selected the event ID.",
+    schema: z.object({
+      eventId: z
+        .string()
+        .min(1)
+        .describe("The exact Google Calendar event ID to delete."),
+    }),
   },
 );
