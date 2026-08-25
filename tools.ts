@@ -1,6 +1,6 @@
 import { tool } from "@langchain/core/tools";
 import { google } from "googleapis";
-import z, { success } from "zod";
+import z from "zod";
 import { oauth2Client } from "./server";
 import tokens from "./tokens.json";
 
